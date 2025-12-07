@@ -9,12 +9,13 @@ return {
     'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
     'MunifTanjim/nui.nvim',
   },
-  lazy = false,
+  cmd = 'Neotree', -- Only load when explicitly called, not on startup
   keys = {
     { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
   },
   opts = {
     filesystem = {
+      hijack_netrw_behavior = 'disabled', -- Don't open when running 'nvim .'
       window = {
         mappings = {
           ['\\'] = 'close_window',

@@ -89,14 +89,37 @@ ____________
 - Vertical splits in Neovim are more practical than horizontal given the ultrawide setup
 - Prefer using left terminal panes for git/tests rather than `:terminal` in Neovim
 
-## Current Learning Status (Updated: 2025-11-28)
+## Current Learning Status (Updated: 2025-12-09)
 
-**Phase:** Foundation (Week 1-2) - "Stop Using the Mouse"
+**Phase:** Phase 3 - Project-Wide Navigation (Week 5-6) - "Think in Symbols, Not Files"
 
-**Current Struggles:**
-- Understanding buffers vs windows vs files
-- Multi-file navigation and switching between buffers
-- Working across multiple unfamiliar files during refactors
+**Phase 1 Completion (✅ MASTERED):**
+- ✅ Telescope-first navigation (`<leader><space>`, `<leader>sg`)
+- ✅ Buffer navigation and management (`<leader>b`, `<S-h>/<S-l>`)
+- ✅ Split window workflows (`<C-hjkl>`, `<leader>wv`)
+- ✅ Thought-driven vs sight-driven navigation mindset
+
+**Phase 2 Completion (✅ MASTERED):**
+- ✅ LSP-powered code navigation (gd, gr, gI, gy, K)
+- ✅ Jump list usage (`<C-o>` / `<C-i>`)
+- ✅ Search patterns (*, n/N, /)
+- ✅ Motion-based navigation (avoiding j/k scrolling)
+- 🔄 Text objects and bracket jumping (still developing - will come with practice)
+
+**Phase 3 Focus Areas:**
+- Symbol-based navigation (`<leader>ss`, `<leader>sS`)
+- Code refactoring workflows (rename, code actions)
+- Task-oriented thinking (find by what it does, not where it lives)
+- Advanced telescope patterns (grep word under cursor, search in open files)
+- Building personal navigation workflows for common tasks
+
+**Current Strengths:**
+- Strong telescope workflow established
+- LSP navigation fluency (gd, gr, K)
+- Comfortable with multi-file projects
+- Understanding buffers, windows, and splits
+- Keyboard-optimized navigation (hjkl, no arrows)
+- Jump list for cross-file navigation
 
 **Workflow Preferences:**
 - Telescope-first approach (grep/search-based, not file-tree based)
@@ -105,15 +128,17 @@ ____________
 - Neo-tree available with `\` but not used as primary tool
 
 **Recent Config Changes Made:**
-- Added buffer navigation: `<S-h>` / `<S-l>` for previous/next buffer (init.lua:204-205)
+- Added buffer navigation: `<S-h>` / `<S-l>` for previous/next buffer (init.lua:211-212)
+- Added `jk` escape mapping for insert/visual modes (init.lua:216-217)
+- Added window split shortcuts: `<leader>wv` / `<leader>wh` (init.lua:222-223)
 - Disabled netrw (built-in file browser) - init.lua:97-98
 - Configured neo-tree to lazy load and not hijack startup (lua/kickstart/plugins/neo-tree.lua)
 
 ## On Future Interactions
 1. Reference the current learning status above
-2. Continue reinforcing buffer navigation concepts
-3. Focus on telescope-based workflows over file trees
-4. Gradually introduce Phase 2 concepts as Phase 1 solidifies
+2. Introduce Phase 2 concepts: LSP navigation, jump list, within-file motions
+3. Continue reinforcing telescope-based workflows
+4. Build on Phase 1 foundation with code-aware navigation patterns
 
 ## Throughout Sessions
 - **Watch for opportunities**: When the user asks how to do something, reference the appropriate section of the navigation guide

@@ -229,6 +229,44 @@ vim.keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'Scroll up half-page (centered)
 vim.keymap.set('n', 'n', 'nzzzv', { desc = 'Next search result (centered)' })
 vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Previous search result (centered)' })
 
+-- Lazygit integration
+--  Opens lazygit in a floating terminal window
+--  Press <leader>gg to launch lazygit for full git workflow
+vim.keymap.set('n', '<leader>gg', function()
+  -- Create a floating window that takes up most of the screen
+  local width = math.floor(vim.o.columns * 0.9)
+  local height = math.floor(vim.o.lines * 0.9)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  -- Create a new buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+
+  -- Create the floating window
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'rounded',
+  })
+
+  -- Open lazygit in terminal mode
+  vim.fn.termopen('lazygit', {
+    on_exit = function()
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end,
+  })
+
+  -- Start in terminal mode
+  vim.cmd('startinsert')
+
+  -- Set up keybinding to close lazygit with 'q' or <Esc>
+  vim.api.nvim_buf_set_keymap(buf, 't', '<Esc>', '<cmd>close<CR>', { noremap = true, silent = true })
+end, { desc = '[G]it [G]UI (lazygit)' })
+
 -- Markdown link from selection
 --  Visual select text, press <leader>ml, enter URL
 vim.keymap.set('v', '<leader>ml', function()
@@ -336,6 +374,13 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      current_line_blame = false, -- Off by default, toggle with <leader>gb
+      on_attach = function(bufnr)
+        local gitsigns = require 'gitsigns'
+
+        -- Toggle inline blame (shows author, date, commit message at end of line)
+        vim.keymap.set('n', '<leader>gb', gitsigns.toggle_current_line_blame, { buffer = bufnr, desc = '[G]it [B]lame toggle' })
+      end,
     },
   },
 
@@ -491,6 +536,12 @@ require('lazy').setup({
             '--hidden', -- Include hidden files
             '--glob',
             '!.git/', -- But exclude .git directory
+          },
+          mappings = {
+            i = {
+              -- Exit telescope with jk (matches insert mode and shell vi-mode)
+              ['jk'] = require('telescope.actions').close,
+            },
           },
         },
         pickers = {
@@ -849,14 +900,47 @@ require('lazy').setup({
         end
       end,
       formatters_by_ft = {
+        -- Lua
         lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
+
+        -- JavaScript/TypeScript - prefer project-local prettier
         javascript = { 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettier' },
         typescript = { 'prettier' },
+        typescriptreact = { 'prettier' },
+
+        -- Web
+        html = { 'prettier' },
+        css = { 'prettier' },
+        scss = { 'prettier' },
+        json = { 'prettier' },
+        jsonc = { 'prettier' },
+        yaml = { 'prettier' },
+        markdown = { 'prettier' },
+
+        -- Python - runs isort then black
+        python = { 'isort', 'black' },
+
+        -- Go
+        go = { 'gofmt', 'goimports' },
+
+        -- Rust
+        rust = { 'rustfmt' },
+
+        -- Ruby
+        ruby = { 'rubocop' },
+
+        -- Shell
+        sh = { 'shfmt' },
+        bash = { 'shfmt' },
+
+        -- Use LSP fallback for anything not listed above
       },
+      -- Conform automatically finds formatters in:
+      -- 1. node_modules/.bin (for prettier, eslint, etc)
+      -- 2. Project root (for local tool configs)
+      -- 3. System PATH (for globally installed tools)
+      -- This means project-specific prettier configs are automatically respected!
     },
   },
 

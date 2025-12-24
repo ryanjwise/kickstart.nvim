@@ -16,6 +16,9 @@ return {
   opts = {
     filesystem = {
       hijack_netrw_behavior = 'disabled', -- Don't open when running 'nvim .'
+      filtered_items = {
+        visible = true,
+      },
       window = {
         mappings = {
           ['\\'] = 'close_window',

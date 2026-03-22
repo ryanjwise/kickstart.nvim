@@ -180,8 +180,22 @@ vim.o.confirm = true
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
--- Diagnostic keymaps
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+-- Quickfix and diagnostics keymaps (<leader>q prefix)
+--  Quickfix is a global list for search results, build errors, etc.
+--  Location list is per-window, used for current file diagnostics
+vim.keymap.set('n', '<leader>qq', '<cmd>copen<CR>', { desc = 'Open/focus quickfix (q to close)' })
+vim.keymap.set('n', '<leader>qn', '<cmd>cnext<CR>zz', { desc = 'Next quickfix (]q)' })
+vim.keymap.set('n', '<leader>qp', '<cmd>cprev<CR>zz', { desc = 'Prev quickfix ([q)' })
+vim.keymap.set('n', '<leader>qc', vim.diagnostic.setloclist, { desc = 'Current file diagnostics → loclist' })
+vim.keymap.set('n', '<leader>qa', vim.diagnostic.setqflist, { desc = 'All diagnostics → quickfix' })
+
+-- Delete quickfix entries without yanking (requires quickfix-reflector plugin)
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'qf',
+  callback = function()
+    vim.keymap.set('n', 'dd', '"_dd', { buffer = true, desc = 'Delete entry without yanking' })
+  end,
+})
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -288,9 +302,6 @@ end, { desc = 'Markdown link from selection' })
 -- Reload Neovim config
 --  Quickly reload config from any file
 vim.keymap.set('n', '<leader>R', '<cmd>source $MYVIMRC<CR><cmd>echo "Config reloaded!"<CR>', { desc = 'Reload config' })
-
--- Disable 's' to allow mini.surround instant access (use 'cl' or 'r' instead)
-vim.keymap.set('n', 's', '<Nop>', { desc = 'Disabled for mini.surround' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -463,6 +474,7 @@ require('lazy').setup({
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>w', group = '[W]indow' },
       },
     },
   },
@@ -576,6 +588,10 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = '[ ] Find existing buffers' })
       vim.keymap.set('n', '<leader>ss', builtin.lsp_document_symbols, { desc = '[S]earch Document [S]ymbols' })
       vim.keymap.set('n', '<leader>sS', builtin.lsp_dynamic_workspace_symbols, { desc = '[S]earch Workspace [S]ymbols' })
+
+      -- Git telescope pickers
+      vim.keymap.set('n', '<leader>gs', builtin.git_status, { desc = '[G]it [S]tatus' })
+      vim.keymap.set('n', '<leader>gh', builtin.git_bcommits, { desc = '[G]it [H]istory (buffer)' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -889,7 +905,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, ruby = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -1118,16 +1134,52 @@ require('lazy').setup({
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
       local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
 
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we set the section for
-      -- cursor location to LINE:COLUMN
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
+      -- Dynamic filename: shows more path segments when the window is wide enough
+      local function smart_filename()
+        local path = vim.fn.expand '%:p'
+        if path == '' then
+          return '[No Name]'
+        end
+
+        local modified = vim.bo.modified and ' [+]' or ''
+        local width = vim.api.nvim_win_get_width(0)
+
+        if width >= 120 then
+          -- Relative path from cwd
+          return vim.fn.fnamemodify(path, ':~:.') .. modified
+        else
+          -- parent/file.ext
+          local parent = vim.fn.fnamemodify(path, ':h:t')
+          local file = vim.fn.fnamemodify(path, ':t')
+          return parent .. '/' .. file .. modified
+        end
       end
+
+      statusline.setup {
+        use_icons = vim.g.have_nerd_font,
+        content = {
+          active = function()
+            local mode, mode_hl = statusline.section_mode { trunc_width = 120 }
+            local diagnostics = statusline.section_diagnostics { trunc_width = 75 }
+            local location = '%2l:%-2v'
+
+            return statusline.combine_groups {
+              { hl = mode_hl, strings = { mode } },
+              { hl = 'MiniStatuslineDevinfo', strings = { diagnostics } },
+              '%<',
+              { hl = 'MiniStatuslineFilename', strings = { smart_filename() } },
+              '%=',
+              { hl = mode_hl, strings = { location } },
+            }
+          end,
+          inactive = function()
+            return statusline.combine_groups {
+              { hl = 'MiniStatuslineFilename', strings = { smart_filename() } },
+            }
+          end,
+        },
+      }
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
@@ -1173,6 +1225,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.quickfix-reflector',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`

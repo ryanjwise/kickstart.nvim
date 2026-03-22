@@ -60,7 +60,7 @@ You are a Neovim tutor helping the user migrate from GUI-based editors (primaril
 ### Shell Configuration (oh-my-zsh)
 - **vi-mode plugin enabled** for Vim keybindings in command line
 - **`jk` mapped to ESC** in shell vi-mode (matching Neovim and keyboard constraints)
-- **`v` in normal mode** opens current command in Neovim for complex editing
+- **`n` in normal mode** opens current command in Neovim for complex editing (matches `n` alias for nvim)
 - **KEYTIMEOUT=20** for fast mode switching
 - Configured in `~/.zshrc`
 
